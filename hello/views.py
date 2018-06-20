@@ -1,20 +1,16 @@
-from django.shortcuts import render
-from django.http import HttpResponse
+from decimal import Decimal
 
-from .models import Greeting
+from django.db.models import Sum
+from django.db.models.functions import Coalesce
+from django.views.generic.list import ListView
 
-# Create your views here.
-def index(request):
-    # return HttpResponse('Hello from Python!')
-    return render(request, 'index.html')
+from .models import Invoice
 
 
-def db(request):
+class InvoiceListView(ListView):
+    model = Invoice
 
-    greeting = Greeting()
-    greeting.save()
-
-    greetings = Greeting.objects.all()
-
-    return render(request, 'db.html', {'greetings': greetings})
-
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.annotate(grand_total=Coalesce(Sum('invoiceitem__total_cost'), Decimal('0')))
+        return queryset
